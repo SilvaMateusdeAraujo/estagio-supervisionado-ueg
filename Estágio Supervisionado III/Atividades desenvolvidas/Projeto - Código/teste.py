@@ -1,4 +1,5 @@
 from calendar import calendar
+import email
 from pprint import pprint
 import pickle
 import os
@@ -10,7 +11,33 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.auth.transport.requests import Request
 
+#o trecho de código abaixo teria como função criar um json quando o usuário criasse uma reserva, e em seguida, o script seria executado tendo como parametro o json
+import json
+#"salaId": "c_3tbhfv91ev3mm2mlba24ml548g@group.calendar.google.com",
+#(salaTitulo, reservaTitulo, reservaDescricao, emailProfessor, anexoUrl, anexoTitulo, data, horarioInicio, horarioTermino)
+parametros_estagio_iii = '''
+{
+		"salaTitulo":"Laboratório de Informática I",
+		"reservaTitulo": "Aula de Programação IV",
+		"reservaDescricao": "Introdução a arquivos JSON",
+		"emailProfessor":"silvamateusdearaujo@gmail.com",
+		"anexoUrl": null,
+		"anexoTitulo": null,
+		"data": "2022-09-09",
+		"horarioInicio":"19:00",
+		"horarioTermino":"20:40"
+}
+'''
+#parametros = json.loads(parametros_estagio_iii)
+#print(parametros)
+#parametros = "Laboratório de Informática I", "Aula de Programação IV", "Introdução a arquivos JSON", "silvamateusdearaujo@gmail.com", None, None, "2022-09-09", "19:00", "20:40"
 
+
+#google cloud essas linhas de código abaixo são para criar buckets, uma opção do google cloud para armazenar arquivos, mas não foi utilizado no projeto.
+	#from google.cloud import storage
+#validação do token de conta de serviços
+	#os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'ServiceKey_GoogleCloud.json'
+	#storage_client = storage.Client()
 
 
 #É utilizada a API do Google, disponível com a assinatura do Google Cloud. Para utilizar a API do google estou utilizando a API desenvolvida por Jie Jenn https://learndataanalysis (guia do youtube de como utilizar a API Google Calendar)
@@ -116,7 +143,7 @@ class GoogleDriverHelper:
 
 if __name__ == '__main__':
 	g = GoogleSheetsHelper()
-	print(g.Delimiter_Type)
+	#print(g.Delimiter_Type)
 
 
 
@@ -130,7 +157,7 @@ if __name__ == '__main__':
 
 
 #criação do token de autenticação. A API do Google cria um JSON  baixado diretamente pelo https://console.cloud.google.com/apis/credentials/ com os dados para autenticação, e o código abaixo cria o token de autenticação (pickling).
-CLIENT_SECRET_FILE = 'client_secret_486321458503-bgc43a93mtvvq9rjll7hcb6pfj3v8nqh.apps.googleusercontent.com.json'
+CLIENT_SECRET_FILE = 'client_secret_486321458503-55flmb7coq2k3p4uvkmj6l0ei6i3j7io.apps.googleusercontent.com.json'
 API_NAME = 'calendar'
 API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -138,23 +165,10 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
 
 #cria um objeto que vai ser utilizado como parametro na criação do calendário https://developers.google.com/calendar/api/v3/reference/calendars/insert
-
-
-sala_request_body = {
-    #título do "calendário" - a sala.
-    'summary':'Laboratório de Informática I',
-	'description':'Sala com projetor utilizada para a prática de programação. São disponíveis 30 computadores de alto desempenho e mesa para utilização de notebooks pessoais'
-}
-
-def criaCalendario():
-    response = service.calendars().insert(body=sala_request_body).execute()
-    print(response)
+#obsoleto
 
 #deleta calendário https://developers.google.com/calendar/api/v3/reference/calendars/delete
-def deletaCalendarioId():
-    service.calendars().delete(calendarId='6a8hs9l4hgh7iopm6se32vd66g@group.calendar.google.com').execute()
-
-
+#obsoleto
 
 #https://developers.google.com/calendar/api/v3/reference/calendars/get
 def listaSumarios():
@@ -182,54 +196,18 @@ def listaSummaryCalendarioEspecifico(id):
     print(calendar_list_entry['summary'])
 
 #para criar o evento (que seria a reserva da sala no horário específico) é necessário informar o Id do calendário (que seria a Sala)
+#obsoleto
 
 
 
 
-#https://developers.google.com/calendar/api/v3/reference/events/insert
-#nested request body https://developers.google.com/calendar/api/v3/reference/events/insert#examples
-reserva_request_body = {
-	#disciplina
-	'summary': 'Aula de Programação IV',
-	#conteúdo da aula
-	'description': 'API REST',
-	#pessoas que vão ter acesso ao evento - professores: https://developers.google.com/calendar/api/concepts/sharing
-	'atendees':[
-		{
-			'email':'mas@aluno.ueg.br',
-			#esta pessoa vai ter permissão para editar
-			'organizer':True
-		}
-	],
-	#documento do evento (aula)
-	#'attachments': [
-		#{
-		#	'fileUrl':'https://docs.google.com/presentation/d/1QE5FXK85JUBlaPqoiFzMm4asiOw-Zc9TC81JIm70cTU/edit?usp=sharing',
-		#	'tittle':'Slides da aula - Requisitos de Software SWECOM'
-	#	}
-	#],
-	'start': {
-    	'dateTime': '2022-07-22T20:50:00-03:00'
-	},
-	'end': {
-		'dateTime': '2022-07-22T22:30:00-03:00'
-	}
-}
 
 #variáveis para criação da reserva
 #mandar os slides da aula
 supportsAttachment = True
 #id do calendário (control C do terminal do método listarSumarios)
-idDoCalendario = 'iq88i2ljpct8rq92m8ssnpp2is@group.calendar.google.com'
+idDoCalendario = 'c_3tbhfv91ev3mm2mlba24ml548g@group.calendar.google.com'
 #criar a reserva
-
-def criaReserva():
-	response = service.events().insert(
-		#precisa fornecer o Id do calendário
-		calendarId=idDoCalendario,
-		supportsAttachments=supportsAttachment,
-		body=reserva_request_body
-	).execute()
 
 #def update():
 #idDoCalendario = response['id'] - vai depender da response
@@ -266,8 +244,130 @@ def listaReservas():
 		print('Id: '+response.get('items')[item]['id'])
 		item = item+1
 
-def main():
-	criaReserva()
+#--------------------------------------------------------------------------------------------------------------------------
+#20 de julho -> início de parametrização
+
+#passa o nome da sala (summary do calendário) para retornar o ID, que pode ser usado para deleção
+def buscaCalendario(salaTitulo):
+	print('buscando calendário '+str(salaTitulo))
+	response = service.calendarList().list().execute()
+	item = 0
+	while (item <len(response.get('items'))):
+		if(response.get('items')[item]['summary']==salaTitulo):
+			salaId = response.get('items')[item]['id']
+			naoEncontrado = False
+			print('calendário encontrado, ID: '+salaId)
+			return salaId
+		item = item +1
+	if(naoEncontrado==False):
+		print('calendário não encontrado')
+
+#https://developers.google.com/calendar/api/v3/reference/events/insert
+#nested request body https://developers.google.com/calendar/api/v3/reference/events/insert#examples
+#passa o título (summary) e descrição para criar uma sala (calendário)
+def criaSala(salaTitulo, salaDescricao):
+	if(salaDescricao) is None:
+		salaDescricao='Sem descrição'
+	corpoSala={
+		'summary':salaTitulo,
+		'description':salaDescricao
+	}
+	response = service.calendars().insert(body=corpoSala).execute()
+	print('foi criada a sala(calendário): '+salaTitulo +' com a descrição: '+salaDescricao)
+
+#passa o iD do calendário e um monte de outras coisa pra criar a reserva de sala (evento)
+def criaReserva(salaTitulo, reservaTitulo, reservaDescricao, emailProfessor, anexoUrl, anexoTitulo, data, horarioInicio, horarioTermino):
+	if (anexoUrl is None or anexoTitulo is None):
+		anexoUrl='https://drive.google.com/file/d/1XIPypCeMfkDKeQ35Qj_Zu74VmwmkWP5M/view?usp=sharing'
+		anexoTitulo='Nenhum anexo disponível'
+
+	#formato '2022-07-22T20:50:00-03:00'
+	inicio = data+'T'+horarioInicio+':00-03:00'
+	termino= data+'T'+horarioTermino+':00-03:00'
+	corpoReserva = {
+	#disciplina
+	'summary': reservaTitulo,
+	#conteúdo da aula
+	'description': reservaDescricao,
+	#pessoas que vão ter acesso ao evento - professores: https://developers.google.com/calendar/api/concepts/sharing
+	'atendees':[
+		{
+			'email':emailProfessor,
+			#esta pessoa vai ter permissão para editar
+			'organizer':True
+		}
+	],
+	#documento do evento (aula)
+	'attachments': [
+		{
+			'fileUrl': anexoUrl,
+			'tittle':anexoTitulo
+		}
+	],
+	'start': {
+    	'dateTime': inicio
+	},
+	'end': {
+		'dateTime': termino
+	}}
 	
+	print('\nParametros de Criação de Reserva......\n')
+	print('salaTitulo: '+salaTitulo)
+	print('salaId: '+buscaCalendario(salaTitulo))
+	print('reservaTitulo: '+reservaTitulo)
+	print('reservaDescrição: '+reservaDescricao)
+	print('emailProfessor: '+emailProfessor)
+	print('anexoUrl: '+anexoUrl)
+	print('anexoTitulo: '+anexoTitulo)
+	print('inicio: '+inicio)
+	print('termino: '+termino)
+
+	service.events().insert(
+		calendarId=buscaCalendario(salaTitulo),
+		supportsAttachments=True,
+		body=corpoReserva
+	).execute()
+	print('Criada a reserva da sala ' +salaTitulo +' para '+reservaTitulo)
+
+
+
+
+def main():
+	print('Executando main... \n')
+#	criaReserva("Laboratório de Informática I", "Aula de Programação IV", "Introdução a arquivos JSON", "silvamateusdearaujo@gmail.com", None, None, "2022-09-09", "19:00", "20:40")
+	
+
+
+#criação de reserva
+#	criaReserva(
+#		'Laboratório de Informática I',
+#		'Aula de Programação II',
+#		'Boas práticas de programação',
+#		'silvamateusdearaujo@gmail.com',
+#		None,
+#		None,
+#		'2022-09-05',
+#		'19:00',
+#		'20:40'
+#	)
+
+#Como criar uma reserva	(salaTitulo, reservaTitulo, reservaDescricao, emailProfessor, anexoUrl, anexoTitulo, data, horarioInicio, horarioTermino)
+#	criaReserva(
+#		'teste feliz', 
+#		'reserva da felicidade', 
+#		'se funcionar da um sorriso', 
+#		'mas@aluno.ueg.br', 
+#		'https://drive.google.com/file/d/1XIPypCeMfkDKeQ35Qj_Zu74VmwmkWP5M/view?usp=sharing',
+#		'John Travolta',
+#		'2022-07-23',
+#		'19:00',
+#		'20:40'
+#	)	
+
+#Como criar sala 
+# 	criaSala(
+# 		"salaTitulo", 
+# 		"salaDescricao"
+# 	)
 
 main()
